@@ -21,7 +21,7 @@ function migrate_plugins_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.migrate_plugins':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('IUL migrate provides customization of sources and processors for D7 data migration.') . '</p>';
+      $output .= '<p>' . t('Provides migrate source and processor plugins.') . '</p>';
       return $output;
 
     default:
