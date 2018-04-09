@@ -5,12 +5,10 @@
  * Contains migrate_plugins.module.
  */
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\migrate\Plugin\MigrateSourceInterface;
 use Drupal\migrate\Plugin\MigrationInterface;
 use Drupal\migrate\Row;
-use Drupal\user\Entity\User;
 
 /**
  * Implements hook_help().
