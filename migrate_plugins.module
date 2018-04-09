@@ -152,14 +152,3 @@ function migrate_plugins_migrate_prepare_row(Row $row, MigrateSourceInterface $s
 function migrate_plugins_extract_relative_path($filepath) {
   return str_replace('sites/default/files/', '', $filepath);
 }
-
-/**
- * Implements hook_ENTITY_TYPE_update().
- */
-function migrate_plugins_user_update(EntityInterface $entity) {
-  // @var \Drupal\user\Entity\User $entity
-  if ($entity instanceof User && isset($entity->cas_username)) {
-    $authmap = \Drupal::service('externalauth.authmap');
-    $authmap->save($entity, 'cas', $entity->cas_username);
-  }
-}
