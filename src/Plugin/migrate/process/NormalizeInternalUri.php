@@ -21,9 +21,9 @@ class NormalizeInternalUri extends ProcessPluginBase {
    * {@inheritdoc}
    */
   public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
-    // Ignore absolute URLS.
     $path = $value;
 
+    // Ignore absolute URLS.
     if (!UrlHelper::isValid($path)) {
       return $path;
     }
