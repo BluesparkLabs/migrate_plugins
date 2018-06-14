@@ -5,10 +5,11 @@ namespace Drupal\migrate_plugins\Command;
 use Drupal\Console\Annotations\DrupalCommand;
 use Drupal\Console\Core\Command\ContainerAwareCommand;
 use Drupal\Console\Core\Style\DrupalStyle;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\migrate_source_csv\CSVFileObject;
+use Drupal\redirect\RedirectRepository;
 use Symfony\Component\Console\Exception\InvalidOptionException;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -24,20 +25,34 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CheckRedirectsListCommand extends ContainerAwareCommand {
 
   /**
+   * File system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
+   * Redirect repository service.
+   *
+   * @var \Drupal\redirect\RedirectRepository
+   */
+  protected $redirectRepository;
+
+  /**
    * CheckRedirectsListCommand constructor.
    *
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager service.
+   * @param \Drupal\redirect\RedirectRepository $redirectRepository
+   *   The redirect repository service.
    */
   public function __construct(
     FileSystemInterface $fileSystem,
-    EntityTypeManagerInterface $entityTypeManager
+    RedirectRepository $redirectRepository
   ) {
     parent::__construct();
     $this->fileSystem = $fileSystem;
-    $this->entityTypeManager = $entityTypeManager;
+    $this->redirectRepository = $redirectRepository;
   }
 
   /**
@@ -94,13 +109,67 @@ class CheckRedirectsListCommand extends ContainerAwareCommand {
       throw new InvalidOptionException(sprintf('The redirect column name "%s" was not found in the CSV headers.', $redirect_column));
     }
 
+    // Set report headers.
+    $headers = [
+      'Source',
+      'Destination',
+    ];
+
+    // Get the total rows.
+    $csv->seek(PHP_INT_MAX);
+    $count_rows = $csv->key() + 1;
+
+    $this->io->comment("Generating redirect rows report.");
+    // Initialize a progress bar to show status of report generation.
+    $progress = new ProgressBar($output, $count_rows);
+    $progress->setFormat(' %current%/%max% [%bar%] %percent:3s%% ');
+
+    // Init counter and report rows.
+    $total_redirects_count = 0;
+    $redirects_match_count = 0;
+    $redirects_miss_count = 0;
+    $rows = [];
+
+    // Go to the first row.
+    $csv->rewind();
+    $csv->seek($csv->getHeaderRowCount());
+
     // Iterate all CSV rows to check redirects.
     while ($csv->valid()) {
+      $destination_url = '<error>NULL</error>';
       // We start with next row due first correspond to headers.
       $csv->next();
       $row = $csv->current();
+      // Redirect source URI to check.
+      $uri = $row[$redirect_column];
+      // Checks if current URI has an associated redirect.
+      // @var \Drupal\redirect\Entity\Redirect $redirect
+      $redirect = $this->redirectRepository->findBySourcePath($uri);
+
+      // Report URIs without redirect.
+      if ($redirect) {
+        $redirect = reset($redirect);
+        // @var \Drupal\Core\Url $url
+        $url = $redirect->getRedirectUrl();
+        $destination_url = $url->toString();
+        $redirects_match_count++;
+      }
+      else {
+        $redirects_miss_count++;
+      }
+
+      // Build the report rows.
+      $rows[] = ['/' . $uri, $destination_url];
+
+      $total_redirects_count++;
+      $progress->advance();
     }
 
+    // Show the report.
+    $this->io->table($headers, $rows);
+    $this->io->simple(sprintf("A total of %d redirects was processed.", $total_redirects_count));
+    $this->io->simple(sprintf("%d has matched redirect.", $redirects_match_count));
+    $this->io->simple(sprintf("%d missed redirect.", $redirects_miss_count));
   }
 
   /**
