@@ -84,12 +84,21 @@ class CheckRedirectsListCommand extends ContainerAwareCommand {
       throw new InvalidOptionException('CSV redirect-column option is required.');
     }
 
+    // @var \Drupal\migrate_source_csv\CSVFileObject $csv
     $csv = $this->openSourceCsv($csv_file);
+    $colum_names = $csv->getColumnNames();
+    // Transform to single dimension array.
+    $colum_names = array_map('reset', $colum_names);
+
+    if (!in_array($redirect_column, $colum_names)) {
+      throw new InvalidOptionException(sprintf('The redirect column name "%s" was not found in the CSV headers.', $redirect_column));
+    }
 
     // Iterate all CSV rows to check redirects.
     while ($csv->valid()) {
+      // We start with next row due first correspond to headers.
+      $csv->next();
       $row = $csv->current();
-      var_dump($row);
     }
 
   }
@@ -118,6 +127,8 @@ class CheckRedirectsListCommand extends ContainerAwareCommand {
 
     // Load the CSV file.
     $csv = new CSVFileObject($real_path);
+    $csv->setFlags(\SplFileObject::READ_CSV);
+    $csv->setCsvControl(',');
     $csv->setHeaderRowCount(1);
 
     $column_names = [];
