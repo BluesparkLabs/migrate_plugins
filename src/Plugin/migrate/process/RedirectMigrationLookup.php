@@ -128,7 +128,7 @@ class RedirectMigrationLookup extends ProcessPluginBase implements ContainerFact
       'node' => 'node/[id]',
       'taxonomy' => 'taxonomy/term/[id]',
       'user' => 'user/[id]',
-      'webform' => 'form/[id]',
+      'webform' => 'webform/[id]',
     ];
 
     $destination_path = FALSE;
