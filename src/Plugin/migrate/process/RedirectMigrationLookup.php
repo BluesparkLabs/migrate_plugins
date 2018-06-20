@@ -72,21 +72,22 @@ class RedirectMigrationLookup extends ProcessPluginBase implements ContainerFact
       $migration_ids = [$migration_ids];
     }
 
+    // Remove path schema.
+    $path = str_replace('internal:/', '', $value);
+
     // Ignore absolute URLS, that not need internal path mapping.
-    if (UrlHelper::isExternal($value)) {
+    if (UrlHelper::isExternal($path)) {
       return $value;
     }
 
     // Skip invalid path.
-    if (!UrlHelper::isValid($value)) {
+    if (!UrlHelper::isValid($path)) {
       return $value;
     }
 
     // Determine the redirect entity_id.
-    $url_parts = UrlHelper::parse($value);
-    // Remove path schema.
-    $path = str_replace('internal:/', '', $url_parts['path']);
-    $path_parts = explode('/', $path);
+    $url_parts = UrlHelper::parse($path);
+    $path_parts = explode('/', $url_parts['path']);
     // Determine the entity type from first argument.
     $entity_type = $path_parts[0];
 
