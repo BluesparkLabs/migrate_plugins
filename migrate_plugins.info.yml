@@ -2,6 +2,8 @@ name: Migrate Plugins
 type: module
 description: Provides migrate source and processor plugins.
 core: 8.x
-package: IUL
+package: Migration
 dependencies:
   - migrate
+  - migrate_plus
+  - migrate_source_csv
