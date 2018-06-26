@@ -11,13 +11,13 @@ use Drupal\migrate\Row;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a 'RemoveUrlAliasForSourcePath' migrate process plugin.
+ * Remove an alias that match a given path.
  *
  * @MigrateProcessPlugin(
- *  id = "remove_url_alias_for_source_path"
+ *  id = "remove_url_alias_for_path"
  * )
  */
-class RemoveUrlAliasForSourcePath extends ProcessPluginBase implements ContainerFactoryPluginInterface {
+class RemoveUrlAliasForPath extends ProcessPluginBase implements ContainerFactoryPluginInterface {
 
   /**
    * Alias storage service.
@@ -51,17 +51,33 @@ class RemoveUrlAliasForSourcePath extends ProcessPluginBase implements Container
    * {@inheritdoc}
    */
   public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
+    // By default we lookup by source column.
+    $valid_fields = ['source', 'alias'];
+    $field = 'source';
+
+    if (isset($this->configuration['field'])) {
+      $field = $this->configuration['field'];
+    }
+
+    // When lookup field is invalid we fallback to use source field.
+    if (!in_array($field, $valid_fields)) {
+      $field = 'source';
+    }
+
     if (!empty($value) && is_string($value)) {
       // The source path must start with leading slash.
-      $source = $value;
-      if ($source[0] != '/') {
-        $source = '/' . $source;
+      $path = $value;
+      if ($path[0] != '/') {
+        $path = '/' . $path;
       }
 
+      var_dump($field);
+      var_dump($path);
       // Delete any URL alias disregard the language that match source path.
       $result = $this->aliasStorage->delete([
-        'source' => $source,
+        $field => $path,
       ]);
+      var_dump($result);
     }
 
     return $value;
