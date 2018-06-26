@@ -71,13 +71,10 @@ class RemoveUrlAliasForPath extends ProcessPluginBase implements ContainerFactor
         $path = '/' . $path;
       }
 
-      var_dump($field);
-      var_dump($path);
       // Delete any URL alias disregard the language that match source path.
       $result = $this->aliasStorage->delete([
         $field => $path,
       ]);
-      var_dump($result);
     }
 
     return $value;
