@@ -1,7 +1,7 @@
 name: Migrate Plugins
 type: module
 description: Provides migrate source and processor plugins.
-core: 8.x
+core_version_requirement: ^8 || ^9
 package: Migration
 dependencies:
   - migrate
